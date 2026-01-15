@@ -21,7 +21,14 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.0' # 确保使用较新的 Flutter 版本
+        flutter-version: '3.24.0'
+
+    # --- 核心修复开始 ---
+    - name: Configure Flutter & Accept Licenses
+      run: |
+        flutter config --no-analytics
+        yes | flutter doctor --android-licenses
+    # --- 核心修复结束 ---
 
     - name: Build APK
       run: |
