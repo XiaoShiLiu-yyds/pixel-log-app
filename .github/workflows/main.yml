@@ -11,27 +11,51 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    # 1. 拉取代码
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # 2. 设置 Python 环境
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
+    # 3. 安装 Flet
     - name: Install Flet
-      run: pip install flet
+      run: |
+        pip install flet
+        pip install -r requirements.txt
 
-    - name: Flet Build APK
-      # 这里会自动拉取 Android SDK 并打包
-      # 请确保你的代码文件名为 main.py
-      uses: flet-dev/flet-build-action@v2
+    # 4. 设置 Java 环境 (Android 打包必须)
+    - name: Setup Java
+      uses: actions/setup-java@v3
       with:
-        target: android
-        main: main.py
-        
+        distribution: 'temurin'
+        java-version: '17'
+
+    # 5. 设置 Flutter 环境 (Flet 底层基于 Flutter)
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+    
+    # 6. 配置 Flet 构建工具
+    - name: Setup Flet Build
+      run: |
+        # 这一步会自动下载 Android SDK 和构建工具
+        flet build apk --project daily_checkin_app --no-build --verbose
+        # 如果你的代码文件名不是 main.py，请修改下面的命令
+        # 但是这里我们不需要真正 build，只要环境准备好
+
+    # 7. 开始打包 APK
+    - name: Build APK
+      run: flet build apk main.py --verbose
+
+    # 8. 上传生成的 APK
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: daily-checkin-app
+        # Flet build 完成后，APK 通常在这个路径
         path: build/apk/*.apk
