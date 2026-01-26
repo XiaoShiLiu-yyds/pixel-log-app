@@ -2,13 +2,17 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -18,26 +22,16 @@ jobs:
     - name: Install Flet
       run: pip install flet
 
-    # 我们直接使用 stable 渠道，不锁定旧版本号，减少冲突概率
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
+    - name: Flet Build APK
+      # 这里会自动拉取 Android SDK 并打包
+      # 请确保你的代码文件名为 main.py
+      uses: flet-dev/flet-build-action@v2
       with:
-        channel: 'stable'
-
-    - name: Configure Flutter Licenses
-      run: |
-        flutter config --no-analytics
-        yes | flutter doctor --android-licenses
-
-    # --- 核心修改在这里 ---
-    # 我们加上了 "yes |" 
-    # 这意味着当 Flet 问 "要下载新版本吗？" 时，系统会自动回答 "y"
-    - name: Build APK
-      run: |
-        yes | flet build apk --verbose
-
+        target: android
+        main: main.py
+        
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: pixel-log-release
-        path: build/apk/
+        name: daily-checkin-app
+        path: build/apk/*.apk
